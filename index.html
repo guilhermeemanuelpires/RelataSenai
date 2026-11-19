@@ -1,0 +1,2106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Atividades e Horas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 222.2 84% 4.9%;
+      --card: 0 0% 100%;
+      --primary: 221.2 83.2% 53.3%;
+      --primary-foreground: 210 40% 98%;
+      --secondary: 210 40% 96.1%;
+      --secondary-foreground: 222.2 47.4% 11.2%;
+      --muted: 210 40% 96.1%;
+      --muted-foreground: 215.4 16.3% 40%;
+      --accent: 210 40% 94%;
+      --destructive: 0 72% 51%;
+      --border: 214.3 31.8% 91.4%;
+      --input: 214.3 31.8% 88%;
+      --ring: 221.2 83.2% 53.3%;
+      --success: 142 72% 27%;
+      --warning: 28 90% 33%;
+      --radius: .5rem
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    [hidden] {
+      display: none !important
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      margin: 0;
+      background: hsl(var(--muted)/.55);
+      color: hsl(var(--foreground));
+      font: 15px/1.5 Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased
+    }
+
+    .i {
+      width: 16px;
+      height: 16px;
+      flex: none;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 100vh
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      background: hsl(var(--card));
+      border-right: 1px solid hsl(var(--border));
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      z-index: 50
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 4px 8px
+    }
+
+    .brand .logo {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: hsl(var(--primary));
+      color: #fff;
+      display: grid;
+      place-items: center
+    }
+
+    .brand .logo .i {
+      width: 20px;
+      height: 20px
+    }
+
+    .brand b {
+      display: block;
+      line-height: 1.1
+    }
+
+    .brand small {
+      color: hsl(var(--muted-foreground))
+    }
+
+    .sidebar nav {
+      display: grid;
+      gap: 4px
+    }
+
+    .nav-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      padding: 0 8px 6px;
+      text-transform: uppercase;
+      letter-spacing: .04em
+    }
+
+    .nav {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 9px 10px;
+      border-radius: calc(var(--radius) - 2px);
+      color: hsl(var(--muted-foreground));
+      text-decoration: none;
+      font-weight: 500;
+      transition: .15s
+    }
+
+    .nav:hover {
+      background: hsl(var(--accent));
+      color: hsl(var(--foreground))
+    }
+
+    .nav.active {
+      background: hsl(var(--primary)/.1);
+      color: hsl(var(--primary))
+    }
+
+    .nav.done {
+      color: hsl(var(--success))
+    }
+
+    .nav.off {
+      opacity: .45;
+      cursor: not-allowed
+    }
+
+    .nav .dot {
+      margin-left: auto
+    }
+
+    .nav:not(.done) .dot {
+      display: none
+    }
+
+    .side-foot {
+      margin-top: auto;
+      font-size: 13px;
+      color: hsl(var(--muted-foreground));
+      padding: 12px;
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius)
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      background: hsl(var(--background)/.85);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid hsl(var(--border))
+    }
+
+    .topbar h1 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 650;
+      letter-spacing: -.01em
+    }
+
+    .topbar p {
+      margin: 0;
+      font-size: 13px;
+      color: hsl(var(--muted-foreground))
+    }
+
+    .actions {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
+
+    .content {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      gap: 24px
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px
+    }
+
+    .stat {
+      padding: 16px 20px
+    }
+
+    .stat .row {
+      justify-content: space-between;
+      color: hsl(var(--muted-foreground));
+      font-size: 13px;
+      font-weight: 500
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 26px;
+      letter-spacing: -.02em;
+      margin-top: 6px
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 380px;
+      gap: 24px;
+      align-items: start
+    }
+
+    .stack {
+      display: grid;
+      gap: 24px
+    }
+
+    .card {
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) + 4px);
+      box-shadow: 0 1px 2px #0f172a0d
+    }
+
+    .card-h {
+      padding: 20px 20px 0
+    }
+
+    .card-c {
+      padding: 20px
+    }
+
+    .card-t {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 650;
+      letter-spacing: -.01em
+    }
+
+    .card-d {
+      margin: 4px 0 0;
+      font-size: 14px;
+      color: hsl(var(--muted-foreground))
+    }
+
+    .muted {
+      color: hsl(var(--muted-foreground))
+    }
+
+    .small {
+      font-size: 13px
+    }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap
+    }
+
+    button {
+      font: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      height: 40px;
+      padding: 0 16px;
+      border-radius: calc(var(--radius) - 2px);
+      border: 1px solid transparent;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background .15s, transform .05s, box-shadow .15s;
+      white-space: nowrap
+    }
+
+    button:hover,
+    .btn:hover {
+      background: hsl(var(--primary)/.9)
+    }
+
+    button:active,
+    .btn:active {
+      transform: scale(.98)
+    }
+
+    :focus-visible {
+      outline: 2px solid hsl(var(--ring));
+      outline-offset: 2px
+    }
+
+    button:disabled {
+      opacity: .5;
+      pointer-events: none
+    }
+
+    button.secondary {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground))
+    }
+
+    button.secondary:hover {
+      background: hsl(var(--secondary)/.7)
+    }
+
+    button.outline {
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      border-color: hsl(var(--input))
+    }
+
+    button.outline:hover {
+      background: hsl(var(--accent))
+    }
+
+    button.ghost {
+      background: transparent;
+      color: hsl(var(--foreground))
+    }
+
+    button.ghost:hover {
+      background: hsl(var(--accent))
+    }
+
+    button.destructive {
+      background: hsl(var(--destructive))
+    }
+
+    button.destructive:hover {
+      background: hsl(var(--destructive)/.9)
+    }
+
+    button.lg {
+      height: 48px;
+      padding: 0 24px;
+      font-size: 15px
+    }
+
+    button.icon {
+      width: 40px;
+      padding: 0
+    }
+
+    .md-hide {
+      display: none
+    }
+
+    .btn {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      height: 44px;
+      padding: 0 20px;
+      border-radius: calc(var(--radius) - 2px);
+      background: hsl(var(--primary));
+      color: #fff;
+      font-weight: 500;
+      cursor: pointer;
+      transition: .15s
+    }
+
+    .drop {
+      border: 2px dashed hsl(var(--input));
+      border-radius: calc(var(--radius) + 2px);
+      background: hsl(var(--muted)/.5);
+      padding: 32px 16px;
+      text-align: center;
+      display: grid;
+      gap: 10px;
+      justify-items: center;
+      transition: .15s
+    }
+
+    .drop:hover {
+      border-color: hsl(var(--primary)/.5);
+      background: hsl(var(--primary)/.04)
+    }
+
+    .drop input {
+      display: none
+    }
+
+    .drop .ic {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: hsl(var(--primary)/.1);
+      color: hsl(var(--primary));
+      display: grid;
+      place-items: center
+    }
+
+    .drop .ic .i {
+      width: 22px;
+      height: 22px
+    }
+
+    .filename {
+      font-weight: 600;
+      word-break: break-all
+    }
+
+    .status {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 14px
+    }
+
+    .status:empty {
+      display: none
+    }
+
+    .good {
+      color: hsl(var(--success))
+    }
+
+    .bad {
+      color: hsl(var(--destructive))
+    }
+
+    input[type=text],
+    input[type=time] {
+      height: 40px;
+      border: 1px solid hsl(var(--input));
+      border-radius: calc(var(--radius) - 2px);
+      padding: 0 12px;
+      font: inherit;
+      font-size: 14px;
+      background: hsl(var(--background));
+      color: inherit;
+      transition: .15s
+    }
+
+    input[type=text]:focus,
+    input[type=time]:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring)/.5);
+      border-color: hsl(var(--ring))
+    }
+
+    input[type=radio] {
+      accent-color: hsl(var(--primary));
+      width: 18px;
+      height: 18px;
+      flex: none
+    }
+
+    .tabs {
+      display: inline-flex;
+      background: hsl(var(--muted));
+      border-radius: var(--radius);
+      padding: 4px;
+      gap: 2px
+    }
+
+    .tabs button {
+      height: 32px;
+      background: transparent;
+      color: hsl(var(--muted-foreground));
+      padding: 0 12px
+    }
+
+    .tabs button:hover {
+      color: hsl(var(--foreground));
+      background: transparent
+    }
+
+    .tabs button[aria-selected=true] {
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      box-shadow: 0 1px 2px #0f172a1a
+    }
+
+    .bar,
+    .prog {
+      height: 8px;
+      background: hsl(var(--secondary));
+      border-radius: 999px;
+      overflow: hidden
+    }
+
+    .bar span,
+    .prog span {
+      display: block;
+      height: 100%;
+      background: hsl(var(--primary));
+      border-radius: 999px;
+      transition: width .25s
+    }
+
+    .bar span {
+      background: hsl(var(--success))
+    }
+
+    .head-row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap
+    }
+
+    .day {
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) + 2px);
+      padding: 16px;
+      margin-bottom: 12px;
+      background: hsl(var(--card));
+      transition: .15s
+    }
+
+    .day:hover {
+      box-shadow: 0 2px 8px #0f172a0f
+    }
+
+    .day.ok {
+      border-color: hsl(var(--success)/.35);
+      background: hsl(var(--success)/.03)
+    }
+
+    .day-head {
+      display: flex;
+      gap: 4px 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px
+    }
+
+    .day-title {
+      font-weight: 650
+    }
+
+    .day-hours {
+      color: hsl(var(--muted-foreground));
+      font-size: 13px
+    }
+
+    .badge {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid transparent
+    }
+
+    .badge.ok {
+      background: hsl(var(--success)/.12);
+      color: hsl(var(--success))
+    }
+
+    .badge.warn {
+      background: hsl(var(--warning)/.12);
+      color: hsl(var(--warning))
+    }
+
+    .badge.off {
+      background: hsl(var(--muted));
+      color: hsl(var(--muted-foreground))
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px
+    }
+
+    .chip {
+      height: 36px;
+      padding: 0 14px;
+      background: transparent;
+      color: hsl(var(--foreground));
+      border: 1px solid hsl(var(--input));
+      border-radius: 999px
+    }
+
+    .chip:hover {
+      background: hsl(var(--accent))
+    }
+
+    .chip[aria-pressed=true] {
+      background: hsl(var(--primary));
+      color: #fff;
+      border-color: hsl(var(--primary))
+    }
+
+    .chip[aria-pressed=true]:hover {
+      background: hsl(var(--primary)/.9)
+    }
+
+    .split {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px dashed hsl(var(--border))
+    }
+
+    .split p {
+      margin: 0 0 10px;
+      color: hsl(var(--warning));
+      font-weight: 500;
+      font-size: 14px
+    }
+
+    .split-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px
+    }
+
+    .split-row label {
+      flex: 1;
+      font-weight: 500;
+      font-size: 14px
+    }
+
+    .edit-hours {
+      margin-top: 12px;
+      font-size: 13px;
+      color: hsl(var(--muted-foreground))
+    }
+
+    .edit-hours input {
+      height: 34px;
+      width: 112px;
+      margin-left: 6px
+    }
+
+    .sc-label {
+      font-size: 14px;
+      font-weight: 600;
+      margin: 18px 0 8px
+    }
+
+    .sc-label:first-of-type {
+      margin-top: 0
+    }
+
+    .radio {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 8px 0;
+      cursor: pointer;
+      font-size: 14px
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: hsl(var(--secondary));
+      border-radius: 999px;
+      padding: 3px 4px 3px 12px;
+      margin: 0 8px 8px 0;
+      font-size: 14px;
+      font-weight: 500
+    }
+
+    .tag button {
+      height: 26px;
+      width: 26px;
+      padding: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: hsl(var(--muted-foreground))
+    }
+
+    .tag button:hover {
+      background: hsl(var(--destructive)/.12);
+      color: hsl(var(--destructive))
+    }
+
+    [data-tip] {
+      position: relative
+    }
+
+    [data-tip]:hover::after,
+    [data-tip]:focus-visible::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: hsl(var(--foreground));
+      color: #fff;
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 60
+    }
+
+    .tbl {
+      overflow-x: auto;
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius)
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px
+    }
+
+    .table th {
+      height: 44px;
+      padding: 0 14px;
+      text-align: left;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted)/.5)
+    }
+
+    .table td {
+      padding: 13px 14px;
+      border-top: 1px solid hsl(var(--border))
+    }
+
+    .table tbody tr:hover {
+      background: hsl(var(--muted)/.4)
+    }
+
+    .table tfoot td {
+      font-weight: 650;
+      background: hsl(var(--muted)/.5)
+    }
+
+    .num {
+      text-align: right !important;
+      font-variant-numeric: tabular-nums
+    }
+
+    .strong {
+      font-weight: 600
+    }
+
+    .pct {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 140px
+    }
+
+    .pct .prog {
+      flex: 1
+    }
+
+    .pct span:last-child {
+      width: 36px;
+      font-size: 13px;
+      color: hsl(var(--muted-foreground))
+    }
+
+    .alert {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      border: 1px solid;
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 14px;
+      margin: 16px 0
+    }
+
+    .alert .i {
+      margin-top: 3px
+    }
+
+    .alert.ok {
+      border-color: hsl(var(--success)/.3);
+      background: hsl(var(--success)/.07);
+      color: hsl(var(--success))
+    }
+
+    .alert.warn {
+      border-color: hsl(var(--warning)/.35);
+      background: hsl(var(--warning)/.07);
+      color: hsl(var(--warning))
+    }
+
+    details {
+      margin-top: 16px;
+      font-size: 14px
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 500;
+      color: hsl(var(--primary))
+    }
+
+    details pre {
+      background: #0f172a;
+      color: #cbd5e1;
+      padding: 12px;
+      border-radius: 8px;
+      overflow: auto;
+      max-height: 220px;
+      white-space: pre-wrap;
+      font-size: 12px
+    }
+
+    .dd {
+      position: relative
+    }
+
+    .menu {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      min-width: 210px;
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 4px;
+      box-shadow: 0 10px 30px #0f172a26;
+      z-index: 40;
+      display: grid
+    }
+
+    .menu button {
+      justify-content: flex-start;
+      height: 36px;
+      width: 100%
+    }
+
+    dialog {
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) + 4px);
+      padding: 24px;
+      max-width: 430px;
+      width: calc(100% - 32px);
+      box-shadow: 0 20px 50px #0f172a40;
+      color: inherit
+    }
+
+    dialog::backdrop {
+      background: #0f172a99
+    }
+
+    dialog h3 {
+      margin: 0 0 6px;
+      font-size: 18px
+    }
+
+    dialog p {
+      margin: 0 0 20px;
+      color: hsl(var(--muted-foreground))
+    }
+
+    .dlg-f {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      flex-wrap: wrap
+    }
+
+    .scrim {
+      display: none
+    }
+
+    @media(min-width:1101px) {
+      .two>.stack {
+        position: sticky;
+        top: 84px
+      }
+    }
+
+    @media(max-width:1100px) {
+      .two {
+        grid-template-columns: 1fr
+      }
+    }
+
+    @media(max-width:1023px) {
+      .app {
+        grid-template-columns: 1fr
+      }
+
+      .md-hide {
+        display: inline-flex
+      }
+
+      .sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: 280px;
+        transform: translateX(-100%);
+        transition: transform .25s;
+        box-shadow: 0 0 40px #0f172a40
+      }
+
+      .nav-open .sidebar {
+        transform: none
+      }
+
+      .nav-open .scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: #0f172a80;
+        z-index: 45
+      }
+
+      .topbar {
+        padding: 12px 16px
+      }
+
+      .content {
+        padding: 16px
+      }
+    }
+
+    @media(max-width:720px) {
+      .stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px
+      }
+
+      .stat {
+        padding: 14px
+      }
+
+      .stat strong {
+        font-size: 22px
+      }
+
+      .topbar p,
+      #exportTop span {
+        display: none
+      }
+
+      .badge {
+        margin-left: 0
+      }
+
+      .card-c {
+        padding: 16px
+      }
+
+      .card-h {
+        padding: 16px 16px 0
+      }
+    }
+
+    input[type=date] {
+      height: 40px;
+      border: 1px solid hsl(var(--input));
+      border-radius: calc(var(--radius) - 2px);
+      padding: 0 12px;
+      font: inherit;
+      font-size: 14px;
+      background: hsl(var(--background));
+      color: inherit;
+      width: 100%
+    }
+
+    input[type=date]:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring)/.5);
+      border-color: hsl(var(--ring))
+    }
+
+    button.sm {
+      height: 32px;
+      width: 32px;
+      padding: 0;
+      color: hsl(var(--muted-foreground))
+    }
+
+    button.sm:hover {
+      background: hsl(var(--destructive)/.12);
+      color: hsl(var(--destructive))
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      font-weight: 500
+    }
+
+    .field input[type=time] {
+      width: 100%
+    }
+
+    .err {
+      color: hsl(var(--destructive));
+      font-size: 13px;
+      min-height: 18px;
+      margin: -4px 0 12px
+    }
+
+    .cal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px
+    }
+
+    .cal-title {
+      font-size: 16px;
+      text-transform: capitalize
+    }
+
+    button.nav-btn {
+      height: 34px;
+      width: 34px;
+      padding: 0
+    }
+
+    .cal-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px
+    }
+
+    .cal-wd {
+      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      padding: 4px 0
+    }
+
+    .cal-cell {
+      position: relative;
+      min-height: 88px;
+      padding: 8px;
+      border: 1px solid hsl(var(--border));
+      border-radius: 10px;
+      background: hsl(var(--card));
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      align-items: flex-start;
+      text-align: left;
+      min-width: 0;
+      overflow: hidden
+    }
+
+    .cal-cell.blank {
+      border: 0;
+      background: transparent
+    }
+
+    .cal-cell.empty {
+      background: hsl(var(--muted)/.5);
+      color: hsl(var(--muted-foreground));
+      border-style: dashed
+    }
+
+    button.cal-cell {
+      height: auto;
+      justify-content: flex-start;
+      font-weight: 400;
+      white-space: normal;
+      color: hsl(var(--foreground));
+      background: hsl(var(--card))
+    }
+
+    button.cal-cell:hover {
+      background: hsl(var(--accent));
+      border-color: hsl(var(--primary)/.4)
+    }
+
+    button.cal-cell.ok {
+      background: hsl(var(--success)/.07);
+      border-color: hsl(var(--success)/.4)
+    }
+
+    button.cal-cell.warn {
+      background: hsl(var(--warning)/.07);
+      border-color: hsl(var(--warning)/.45)
+    }
+
+    button.cal-cell.off {
+      background: hsl(var(--muted)/.55);
+      color: hsl(var(--muted-foreground))
+    }
+
+    button.cal-cell.sel {
+      box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--ring))
+    }
+
+    .cal-n {
+      font-weight: 650;
+      font-size: 14px
+    }
+
+    .cal-h {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      font-variant-numeric: tabular-nums
+    }
+
+    .cal-acts {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      width: 100%;
+      margin-top: auto
+    }
+
+    .cal-acts i {
+      font-style: normal;
+      font-size: 11px;
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      border-radius: 4px;
+      padding: 0 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: block
+    }
+
+    .cal-dot {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%
+    }
+
+    .cal-dot.ok {
+      background: hsl(var(--success))
+    }
+
+    .cal-dot.warn {
+      background: hsl(var(--warning))
+    }
+
+    .cal-dot.off {
+      display: none
+    }
+
+    .cal-legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground))
+    }
+
+    .cal-legend span::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px
+    }
+
+    .cal-legend .l-ok::before {
+      background: hsl(var(--success))
+    }
+
+    .cal-legend .l-warn::before {
+      background: hsl(var(--warning))
+    }
+
+    .cal-legend .l-off::before {
+      background: hsl(var(--input))
+    }
+
+    @media(max-width:720px) {
+      .cal-grid {
+        gap: 4px
+      }
+
+      .cal-cell {
+        min-height: 58px;
+        padding: 5px
+      }
+
+      .cal-acts {
+        display: none
+      }
+
+      .cal-h {
+        font-size: 10px
+      }
+
+      .cal-dot {
+        top: 6px;
+        right: 6px
+      }
+    }
+
+    .credit {
+      text-align: center;
+      font-size: 12px;
+      color: hsl(var(--muted-foreground)/.8);
+      padding: 0 16px 24px;
+      letter-spacing: .02em
+    }
+  </style>
+</head>
+
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="17 8 12 3 7 8" />
+        <line x1="12" x2="12" y1="3" y2="15" />
+      </symbol>
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+        <polyline points="7 10 12 15 17 10" />
+        <line x1="12" x2="12" y1="15" y2="3" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="M20 6 9 17l-5-5" />
+      </symbol>
+      <symbol id="i-x" viewBox="0 0 24 24">
+        <path d="M18 6 6 18" />
+        <path d="m6 6 12 12" />
+      </symbol>
+      <symbol id="i-plus" viewBox="0 0 24 24">
+        <path d="M5 12h14" />
+        <path d="M12 5v14" />
+      </symbol>
+      <symbol id="i-undo" viewBox="0 0 24 24">
+        <path d="M9 14 4 9l5-5" />
+        <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 24 24">
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+        <path d="M10 9H8" />
+        <path d="M16 13H8" />
+        <path d="M16 17H8" />
+      </symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24">
+        <path d="M8 2v4" />
+        <path d="M16 2v4" />
+        <rect width="18" height="18" x="3" y="4" rx="2" />
+        <path d="M3 10h18" />
+      </symbol>
+      <symbol id="i-list-checks" viewBox="0 0 24 24">
+        <path d="m3 17 2 2 4-4" />
+        <path d="m3 7 2 2 4-4" />
+        <path d="M13 6h8" />
+        <path d="M13 12h8" />
+        <path d="M13 18h8" />
+      </symbol>
+      <symbol id="i-circle-check" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="m9 12 2 2 4-4" />
+      </symbol>
+      <symbol id="i-triangle-alert" viewBox="0 0 24 24">
+        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+        <path d="M12 9v4" />
+        <path d="M12 17h.01" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </symbol>
+      <symbol id="i-menu" viewBox="0 0 24 24">
+        <line x1="4" x2="20" y1="12" y2="12" />
+        <line x1="4" x2="20" y1="6" y2="6" />
+        <line x1="4" x2="20" y1="18" y2="18" />
+      </symbol>
+      <symbol id="i-more" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+        <circle cx="5" cy="12" r="1" />
+      </symbol>
+      <symbol id="i-reset" viewBox="0 0 24 24">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+        <path d="M3 3v5h5" />
+      </symbol>
+      <symbol id="i-zap" viewBox="0 0 24 24">
+        <path
+          d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z" />
+      </symbol>
+      <symbol id="i-cap" viewBox="0 0 24 24">
+        <path
+          d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z" />
+        <path d="M22 10v6" />
+        <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5" />
+      </symbol>
+      <symbol id="i-table" viewBox="0 0 24 24">
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+        <path d="M8 13h2" />
+        <path d="M14 13h2" />
+        <path d="M8 17h2" />
+        <path d="M14 17h2" />
+      </symbol>
+      <symbol id="i-trash" viewBox="0 0 24 24">
+        <path d="M3 6h18" />
+        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+        <line x1="10" x2="10" y1="11" y2="17" />
+        <line x1="14" x2="14" y1="11" y2="17" />
+      </symbol>
+      <symbol id="i-chevron-left" viewBox="0 0 24 24">
+        <path d="m15 18-6-6 6-6" />
+      </symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
+    </defs>
+  </svg>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Navegação principal">
+      <div class="brand"><span class="logo"><svg class="i">
+            <use href="#i-cap" />
+          </svg></span><span><b>Horas</b><small>Controle de atividades</small></span></div>
+      <nav>
+        <div class="nav-label">Etapas</div>
+        <a href="#step1" class="nav active" id="st1"><svg class="i">
+            <use href="#i-upload" />
+          </svg>Importar PDF<span class="dot"><svg class="i">
+              <use href="#i-check" />
+            </svg></span></a>
+        <a href="#step2" class="nav off" id="st2"><svg class="i">
+            <use href="#i-list-checks" />
+          </svg>Dias e atividades<span class="dot"><svg class="i">
+              <use href="#i-check" />
+            </svg></span></a>
+        <a href="#step3" class="nav off" id="st3"><svg class="i">
+            <use href="#i-table" />
+          </svg>Resumo e planilha<span class="dot"><svg class="i">
+              <use href="#i-check" />
+            </svg></span></a>
+      </nav>
+      <div class="side-foot">Seus dados ficam apenas neste computador. Nada é enviado para a internet.</div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+    <div>
+      <header class="topbar">
+        <button class="outline icon md-hide" id="menuBtn" aria-label="Abrir menu"><svg class="i">
+            <use href="#i-menu" />
+          </svg></button>
+        <div>
+          <h1>Controle de Atividades e Horas</h1>
+          <p id="periodLabel">Importe o cartão-ponto para começar</p>
+        </div>
+        <div class="actions">
+          <button id="exportTop" hidden><svg class="i">
+              <use href="#i-download" />
+            </svg><span>Baixar planilha</span></button>
+          <div class="dd"><button class="outline" id="moreBtn" aria-haspopup="menu" aria-expanded="false"><svg
+                class="i">
+                <use href="#i-more" />
+              </svg><span>Mais ações</span></button>
+            <div class="menu" id="moreMenu" role="menu" hidden>
+              <button class="ghost" id="addDayMenu" type="button"><svg class="i">
+                  <use href="#i-plus" />
+                </svg>Adicionar dia manualmente</button>
+              <button class="ghost" id="sampleBtn" type="button"><svg class="i">
+                  <use href="#i-file" />
+                </svg>Ver um exemplo sem enviar PDF</button>
+              <button class="ghost" id="clearBtn" type="button"><svg class="i">
+                  <use href="#i-reset" />
+                </svg>Começar de novo</button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="content">
+        <section class="stats" aria-label="Indicadores">
+          <div class="card stat">
+            <div class="row">Dias trabalhados <svg class="i">
+                <use href="#i-calendar" />
+              </svg></div><strong id="statDays">0</strong>
+          </div>
+          <div class="card stat">
+            <div class="row">Horas trabalhadas <svg class="i">
+                <use href="#i-clock" />
+              </svg></div><strong id="statWorked">00:00</strong>
+          </div>
+          <div class="card stat">
+            <div class="row">Horas distribuídas <svg class="i">
+                <use href="#i-list-checks" />
+              </svg></div><strong id="statAlloc">00:00</strong>
+          </div>
+          <div class="card stat">
+            <div class="row">Ainda sem atividade <svg class="i">
+                <use href="#i-triangle-alert" />
+              </svg></div><strong id="statPending">00:00</strong>
+          </div>
+        </section>
+
+        <section class="card" id="step1">
+          <div class="card-h">
+            <h2 class="card-t">1. Importar cartão-ponto</h2>
+            <p class="card-d">Escolha o PDF do seu cartão-ponto. Ele é lido neste computador e não é enviado para a
+              internet.</p>
+          </div>
+          <div class="card-c">
+            <div class="drop">
+              <span class="ic"><svg class="i">
+                  <use href="#i-upload" />
+                </svg></span>
+              <label class="btn" for="pdfFile"><svg class="i">
+                  <use href="#i-file" />
+                </svg>Escolher arquivo PDF</label>
+              <input type="file" id="pdfFile" accept="application/pdf,.pdf">
+              <div id="fileName" class="filename"></div>
+              <div id="importStatus" class="status" role="status" aria-live="polite"></div>
+            </div>
+            <details>
+              <summary>Algo deu errado? Opções avançadas</summary>
+              <p class="muted" style="margin:10px 0 6px">Ano usado quando o PDF não informar:
+                <input id="yearInput" type="text" inputmode="numeric" maxlength="4" style="width:96px;margin-left:6px">
+              </p>
+              <p class="muted" style="margin:10px 0 6px">Texto lido do PDF (envie para quem for dar suporte):</p>
+              <pre id="debugText">Nenhum PDF lido ainda.</pre>
+            </details>
+          </div>
+        </section>
+
+        <div id="step2" class="two" hidden>
+          <section class="card">
+            <div class="card-h">
+              <div class="head-row">
+                <div>
+                  <h2 class="card-t">2. Dias e atividades</h2>
+                  <p class="card-d">Toque em um dia do calendário e escolha as atividades. Com <b>uma</b>, todas as
+                    horas vão para ela; com <b>mais de uma</b>, informe as horas de cada.</p>
+                </div>
+                <div class="row" style="gap:8px"><button id="addDayBtn" class="outline" type="button"><svg class="i">
+                      <use href="#i-plus" />
+                    </svg>Adicionar dia</button>
+                  <div class="tabs" id="dayTabs" role="tablist"><button type="button" role="tab" aria-selected="true"
+                      data-view="cal">Calendário</button><button type="button" role="tab" aria-selected="false"
+                      data-view="work">Lista</button><button type="button" role="tab" aria-selected="false"
+                      data-view="all">Todos os dias</button></div>
+                </div>
+              </div>
+              <div class="row" style="margin-top:16px"><strong id="progressText" style="font-size:14px">0 de 0 dias
+                  prontos</strong><span id="pendingText" class="muted small" style="margin-left:auto"></span></div>
+              <div class="bar" style="margin-top:8px"><span id="progressBar" style="width:0%"></span></div>
+            </div>
+            <div class="card-c" id="daysList"></div>
+          </section>
+          <div class="stack">
+            <section class="card">
+              <div class="card-h">
+                <h2 class="card-t"><svg class="i">
+                    <use href="#i-zap" />
+                  </svg> Atalho: aplicar a vários dias</h2>
+                <p class="card-d">Preencha muitos dias de uma só vez.</p>
+              </div>
+              <div class="card-c">
+                <div class="sc-label">1. Quais atividades? <span class="muted" style="font-weight:400">(pode escolher
+                    mais de uma)</span></div>
+                <div id="bulkActs" class="chips"></div>
+                <div class="sc-label">2. Em quais dias da semana?</div>
+                <div id="bulkDays" class="chips">
+                  <button type="button" class="chip" aria-pressed="true" data-wd="SEG">Seg</button><button type="button"
+                    class="chip" aria-pressed="true" data-wd="TER">Ter</button><button type="button" class="chip"
+                    aria-pressed="true" data-wd="QUA">Qua</button><button type="button" class="chip" aria-pressed="true"
+                    data-wd="QUI">Qui</button><button type="button" class="chip" aria-pressed="true"
+                    data-wd="SEX">Sex</button><button type="button" class="chip" aria-pressed="false"
+                    data-wd="SAB">Sáb</button><button type="button" class="chip" aria-pressed="false"
+                    data-wd="DOM">Dom</button>
+                </div>
+                <div class="sc-label">3. Quantas horas?</div>
+                <label class="radio"><input type="radio" name="bulkMode" value="all" checked> Todas as horas livres do
+                  dia (com mais de uma atividade, divide igualmente)</label>
+                <label class="radio"><input type="radio" name="bulkMode" value="fixed"> Informar as horas de cada
+                  atividade, por dia</label>
+                <div id="bulkHoursList" hidden style="margin:8px 0 0 28px"></div>
+                <div class="row" style="margin-top:18px"><button id="bulkBtn" type="button"><svg class="i">
+                      <use href="#i-check" />
+                    </svg>Aplicar nos dias escolhidos</button><button id="undoBtn" class="outline" type="button"
+                    hidden><svg class="i">
+                      <use href="#i-undo" />
+                    </svg>Desfazer</button></div>
+                <div id="bulkMsg" class="status" role="status" aria-live="polite" style="margin-top:12px"></div>
+              </div>
+            </section>
+            <section class="card">
+              <div class="card-h">
+                <h2 class="card-t">Minhas atividades</h2>
+                <p class="card-d">Cadastre novas atividades; elas aparecem em todos os dias.</p>
+              </div>
+              <div class="card-c">
+                <div class="row" style="flex-wrap:nowrap"><input id="newActivity" type="text"
+                    placeholder="Ex.: Reunião pedagógica" style="flex:1;min-width:0"><button id="addActivity"
+                    type="button"><svg class="i">
+                      <use href="#i-plus" />
+                    </svg>Adicionar</button></div>
+                <div id="activityTags" style="margin-top:16px"></div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <section class="card" id="step3" hidden>
+          <div class="card-h">
+            <div class="head-row">
+              <div>
+                <h2 class="card-t">3. Resumo e planilha</h2>
+                <p class="card-d">Total de horas de cada atividade no período.</p>
+              </div>
+              <button id="exportBtn" class="lg" type="button"><svg class="i">
+                  <use href="#i-download" />
+                </svg>Baixar planilha Excel</button>
+            </div>
+          </div>
+          <div class="card-c">
+            <div id="summary"></div>
+            <div id="finalNotice"></div>
+            <p class="muted small" style="margin:0">A planilha tem 3 abas: lançamentos por dia, total por atividade e
+              uma tabela dia × atividade.</p>
+          </div>
+        </section>
+      </main>
+      <footer class="credit">By: Prof. Guilherme Pires</footer>
+    </div>
+  </div>
+  <dialog id="dayDlg">
+    <h3>Adicionar dia</h3>
+    <p>Inclua um dia que não veio no PDF (por exemplo, um plantão ou evento avulso).</p>
+    <label class="field">Data<input type="date" id="newDayDate"></label>
+    <label class="field">Horas trabalhadas<input type="time" id="newDayHours" value="08:00"></label>
+    <div class="err" id="newDayErr" role="alert"></div>
+    <div class="dlg-f"><button class="outline" id="dayCancel" type="button">Cancelar</button><button id="daySave"
+        type="button">Adicionar</button></div>
+  </dialog>
+  <dialog id="dlg">
+    <h3 id="dlgTitle"></h3>
+    <p id="dlgDesc"></p>
+    <div class="dlg-f"><button class="outline" id="dlgNo" type="button">Cancelar</button><button id="dlgOk"
+        type="button">Continuar</button></div>
+  </dialog>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    const DEFAULT_ACTIVITIES = [];
+    const WEEKDAYS = { DOM: 'Domingo', SEG: 'Segunda-feira', TER: 'Terça-feira', QUA: 'Quarta-feira', QUI: 'Quinta-feira', SEX: 'Sexta-feira', SAB: 'Sábado' };
+    const WD_KEYS = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+    const STORE_KEY = 'controle_atividades_v3';
+    const $ = id => document.getElementById(id);
+    const icon = n => `<svg class="i" aria-hidden="true"><use href="#i-${n}"/></svg>`;
+    function ask(title, desc, o = {}) {   // Dialog (AlertDialog) do shadcn: substitui alert/confirm
+      return new Promise(res => {
+        const d = $('dlg'), ok = $('dlgOk'), no = $('dlgNo');
+        $('dlgTitle').textContent = title; $('dlgDesc').textContent = desc;
+        ok.textContent = o.ok || 'Continuar'; ok.className = o.danger ? 'destructive' : ''; no.hidden = !!o.info;
+        const done = v => { d.close(); res(v); };
+        ok.onclick = () => done(true); no.onclick = () => done(false);
+        d.oncancel = e => { e.preventDefault(); done(false); };
+        d.showModal(); ok.focus();
+      });
+    }
+
+    let activities = [...DEFAULT_ACTIVITIES];
+    let days = [];
+    let showAll = false;
+    let view = 'cal', selDate = null, calMonth = null;
+
+    /* ---------- utilidades ---------- */
+    function toMinutes(v) {
+      const m = String(v == null ? '' : v).trim().match(/^(\d{1,3})(?::(\d{2}))?$/);
+      return m ? Number(m[1]) * 60 + Number(m[2] || 0) : 0;
+    }
+    function toHHMM(n) {
+      n = Math.max(0, Math.round(n || 0));
+      return String(Math.floor(n / 60)).padStart(2, '0') + ':' + String(n % 60).padStart(2, '0');
+    }
+    function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function setStatus(msg, kind = '') { $('importStatus').innerHTML = msg ? (kind === 'good' ? icon('circle-check') : kind === 'bad' ? icon('triangle-alert') : icon('info')) + '<span>' + esc(msg) + '</span>' : ''; $('importStatus').className = 'status ' + kind; }
+    function weekdayOf(iso) { const [y, m, d] = iso.split('-').map(Number); return WD_KEYS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()]; }
+    function brDate(iso) { return iso.split('-').reverse().join('/'); }
+    function excelSerial(iso) { const [y, m, d] = iso.split('-').map(Number); return (Date.UTC(y, m - 1, d) - Date.UTC(1899, 11, 30)) / 86400000; }
+    function createDay(date, weekday, worked, bank = 0) { return { date, weekday, worked, bank, allocations: [] }; }
+    const allocated = d => d.allocations.reduce((s, a) => s + a.minutes, 0);
+    const isDone = d => d.allocations.length > 0 && allocated(d) === d.worked;
+
+    function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify({ activities, days })); } catch (e) { } }
+    function load() {
+      try {
+        const o = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); if (!o) return;
+        if (Array.isArray(o.activities) && o.activities.length) activities = o.activities;
+        if (Array.isArray(o.days)) days = o.days;
+      } catch (e) { }
+    }
+
+    /* ---------- tela ---------- */
+    function calendarHTML(dayCard) {
+      if (!days.length) return '';
+      if (!days.some(d => d.date === selDate)) {
+        selDate = (days.find(d => d.worked > 0 && !isDone(d)) || days.find(d => d.worked > 0) || days[0]).date; calMonth = null;
+      }
+      const first = days[0].date.slice(0, 7), last = days.at(-1).date.slice(0, 7);
+      if (!calMonth || calMonth < first || calMonth > last) calMonth = selDate.slice(0, 7);
+      const [y, m] = calMonth.split('-').map(Number);
+      const title = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+      const lead = new Date(Date.UTC(y, m - 1, 1)).getUTCDay(), dim = new Date(Date.UTC(y, m, 0)).getUTCDate();
+      let cells = '<div class="cal-cell blank"></div>'.repeat(lead);
+      for (let n = 1; n <= dim; n++) {
+        const iso = `${y}-${String(m).padStart(2, '0')}-${String(n).padStart(2, '0')}`, i = days.findIndex(d => d.date === iso);
+        if (i < 0) { cells += `<div class="cal-cell empty"><span class="cal-n">${n}</span></div>`; continue; }
+        const d = days[i], [cls, label] = statusOf(d), acts = d.allocations.map(a => a.activity);
+        cells += `<button type="button" class="cal-cell ${cls}${iso === selDate ? ' sel' : ''}" data-calday="${iso}" aria-label="${n}: ${toHHMM(d.worked)} trabalhadas, ${label}" aria-pressed="${iso === selDate}">
+      <span class="cal-n">${n}</span>${d.worked ? `<span class="cal-h">${toHHMM(d.worked)}</span>` : ''}
+      <span class="cal-acts">${acts.slice(0, 2).map(a => `<i>${esc(a)}</i>`).join('')}${acts.length > 2 ? `<i>+${acts.length - 2}</i>` : ''}</span>
+      <span class="cal-dot ${cls}"></span></button>`;
+      }
+      const idx = days.findIndex(d => d.date === selDate);
+      return `<div class="cal-head"><button type="button" class="outline nav-btn" data-calnav="-1" ${calMonth <= first ? 'disabled' : ''} aria-label="Mês anterior">${icon('chevron-left')}</button>
+    <strong class="cal-title">${title}</strong>
+    <button type="button" class="outline nav-btn" data-calnav="1" ${calMonth >= last ? 'disabled' : ''} aria-label="Próximo mês">${icon('chevron-right')}</button></div>
+    <div class="cal-grid">${['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(w => `<div class="cal-wd">${w}</div>`).join('')}${cells}</div>
+    <div class="cal-legend"><span class="l-ok">Pronto</span><span class="l-warn">Falta distribuir</span><span class="l-off">Sem horas</span></div>
+    <div style="margin-top:20px">${dayCard([days[idx], idx])}</div>`;
+    }
+    function statusOf(d) {
+      const n = d.allocations.length, diff = d.worked - allocated(d);
+      if (d.worked === 0) return ['off', 'Sem horas'];
+      if (n === 0) return ['warn', 'Escolha as atividades'];
+      if (diff === 0) return ['ok', 'Pronto'];
+      return ['warn', diff > 0 ? `Faltam ${toHHMM(diff)}` : `Passou ${toHHMM(-diff)}`];
+    }
+
+    function render() {
+      const has = days.length > 0;
+      $('step2').hidden = !has; $('step3').hidden = !has;
+
+      const work = days.filter(d => d.worked > 0);
+      const done = work.filter(isDone).length;
+      const pendingMin = work.reduce((s, d) => s + Math.max(0, d.worked - allocated(d)), 0);
+      const allOk = has && work.length > 0 && done === work.length;
+      $('statDays').textContent = work.length;
+      $('statWorked').textContent = toHHMM(days.reduce((s, d) => s + d.worked, 0));
+      $('statAlloc').textContent = toHHMM(days.reduce((s, d) => s + allocated(d), 0));
+      $('statPending').textContent = toHHMM(pendingMin);
+
+      $('st1').className = 'nav ' + (has ? 'done' : 'active');
+      $('st2').className = 'nav ' + (!has ? 'off' : (allOk ? 'done' : 'active'));
+      $('st3').className = 'nav ' + (!has ? 'off' : (allOk ? 'active' : ''));
+      $('exportTop').hidden = !has;
+
+      $('progressText').textContent = `${done} de ${work.length} dias prontos`;
+      $('pendingText').textContent = pendingMin ? `Faltam distribuir ${toHHMM(pendingMin)}` : (work.length ? 'Tudo distribuído 🎉' : '');
+      $('progressBar').style.width = work.length ? (done / work.length * 100) + '%' : '0%';
+      $('periodLabel').textContent = has ? `Período: ${brDate(days[0].date)} a ${brDate(days.at(-1).date)}` : 'Importe o cartão-ponto para começar';
+
+      renderBulk();
+      $('activityTags').innerHTML = activities.map((a, i) =>
+        `<span class="tag">${esc(a)} <button type="button" data-remove="${i}" aria-label="Excluir ${esc(a)}" data-tip="Excluir">${icon('x')}</button></span>`).join('');
+
+      const visible = days.map((d, i) => [d, i]).filter(([d]) => d.worked > 0 || showAll);
+      const dayCard = ([d, i]) => {
+        const [cls, label] = statusOf(d);
+        const chips = activities.map((a, k) => {
+          const on = d.allocations.some(x => x.activity === a);
+          return `<button type="button" class="chip" aria-pressed="${on}" data-toggle="${i}" data-act="${k}">${esc(a)}</button>`;
+        }).join('');
+        const split = d.allocations.length >= 2 ? `
+      <div class="split">
+        <p>${isDone(d) ? 'Horas por atividade:' : 'Informe quantas horas foram em cada atividade:'}</p>
+        ${d.allocations.map((a, j) => `
+          <div class="split-row"><label for="al-${i}-${j}">${esc(a.activity)}</label>
+          <input id="al-${i}-${j}" type="time" value="${toHHMM(a.minutes)}" data-day="${i}" data-alloc="${j}"></div>`).join('')}
+      </div>` : '';
+        return `<div class="day ${cls === 'ok' ? 'ok' : ''}" id="day-${i}">
+      <div class="day-head">
+        <span class="day-title">${WEEKDAYS[d.weekday] || d.weekday}, ${brDate(d.date).slice(0, 5)}</span>
+        <span class="day-hours">${toHHMM(d.worked)} trabalhadas${d.bank ? ` · crédito de banco: ${toHHMM(d.bank)}` : ''}</span>
+        <span class="badge ${cls}">${label}</span>
+        <button type="button" class="ghost sm" data-delday="${i}" data-tip="Excluir dia" aria-label="Excluir dia">${icon('trash')}</button>
+      </div>
+      <div class="chips">${chips}</div>
+      ${split}
+      <div class="edit-hours">As horas estão erradas? Corrigir:
+        <input type="time" value="${toHHMM(d.worked)}" data-worked="${i}" aria-label="Corrigir horas trabalhadas"></div>
+    </div>`;
+      };
+      $('daysList').innerHTML = view === 'cal' ? calendarHTML(dayCard)
+        : (visible.length ? visible.map(dayCard).join('') : '<p class="muted">Nenhum dia com horas trabalhadas foi encontrado.</p>');
+
+      renderSummary(work, allOk, pendingMin, done);
+      save();
+    }
+
+    function totalsByActivity() {
+      const t = {}; activities.forEach(a => t[a] = 0);
+      days.forEach(d => d.allocations.forEach(a => t[a.activity] = (t[a.activity] || 0) + a.minutes));
+      return t;
+    }
+    function renderSummary(work, allOk, pendingMin, done) {
+      const entries = Object.entries(totalsByActivity()).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+      const all = entries.reduce((s, x) => s + x[1], 0);
+      const bank = days.reduce((s, d) => s + d.bank, 0);
+      $('summary').innerHTML = entries.length
+        ? `<div class="tbl"><table class="table"><thead><tr><th>Atividade</th><th class="num">Horas</th><th>Participação</th></tr></thead><tbody>${entries.map(([name, min]) => {
+          const p = all ? min / all * 100 : 0;
+          return `<tr><td class="strong">${esc(name)}</td><td class="num">${toHHMM(min)}</td><td><div class="pct"><div class="prog"><span style="width:${p}%"></span></div><span>${Math.round(p)}%</span></div></td></tr>`;
+        }).join('')}</tbody><tfoot><tr><td>Total distribuído</td><td class="num">${toHHMM(all)}</td><td></td></tr></tfoot></table></div>`
+        : '<p class="muted">Quando você escolher as atividades, os totais aparecem aqui.</p>';
+      if (bank) $('summary').innerHTML += `<p class="muted small">Crédito de banco de horas no período: ${toHHMM(bank)} (não entra nas somas acima).</p>`;
+      $('finalNotice').innerHTML = allOk
+        ? `<div class="alert ok">${icon('circle-check')}<div>Tudo certo! Todos os dias foram preenchidos.</div></div>`
+        : `<div class="alert warn">${icon('triangle-alert')}<div>Ainda há ${work.length - done} dia(s) incompleto(s)${pendingMin ? ` (faltam ${toHHMM(pendingMin)})` : ''}.<br><button type="button" class="outline" id="gotoPending" style="margin-top:8px">Ir para o primeiro dia incompleto</button></div></div>`;
+    }
+
+    /* ---------- ações ---------- */
+    function toggleActivity(i, name) {
+      const d = days[i], idx = d.allocations.findIndex(a => a.activity === name);
+      if (idx >= 0) {
+        d.allocations.splice(idx, 1);
+        if (d.allocations.length === 1) d.allocations[0].minutes = d.worked;
+      } else if (d.allocations.length === 0) {
+        d.allocations.push({ activity: name, minutes: d.worked });
+      } else if (d.allocations.length === 1) {
+        d.allocations.push({ activity: name, minutes: 0 });
+        d.allocations.forEach(a => a.minutes = 0);               // pede para a pessoa informar a divisão
+      } else {
+        d.allocations.push({ activity: name, minutes: Math.max(0, d.worked - allocated(d)) });
+      }
+    }
+
+    $('daysList').addEventListener('click', e => {
+      const b = e.target.closest('[data-toggle]'); if (!b) return;
+      clearUndo();
+      toggleActivity(+b.dataset.toggle, activities[+b.dataset.act]); render();
+    });
+    $('daysList').addEventListener('change', e => {
+      const t = e.target; clearUndo();
+      if (t.dataset.alloc !== undefined) {
+        const d = days[+t.dataset.day], j = +t.dataset.alloc;
+        d.allocations[j].minutes = toMinutes(t.value);
+        if (d.allocations.length === 2) d.allocations[1 - j].minutes = Math.max(0, d.worked - d.allocations[j].minutes); // completa o outro automaticamente
+        render();
+      } else if (t.dataset.worked !== undefined) {
+        const d = days[+t.dataset.worked]; d.worked = toMinutes(t.value);
+        if (d.allocations.length === 1) d.allocations[0].minutes = d.worked;
+        render();
+      }
+    });
+    $('activityTags').addEventListener('click', async e => {
+      const b = e.target.closest('[data-remove]'); if (!b) return;
+      const name = activities[+b.dataset.remove];
+      if (days.some(d => d.allocations.some(a => a.activity === name))) {
+        await ask('Atividade em uso', `"${name}" já está sendo usada em algum dia. Desmarque-a nesses dias antes de excluir.`, { info: 1, ok: 'Entendi' }); return;
+      }
+      if (await ask('Excluir atividade', `Excluir "${name}" da lista?`, { ok: 'Excluir', danger: 1 })) { activities.splice(+b.dataset.remove, 1); render(); }
+    });
+    $('addActivity').onclick = () => {
+      const v = $('newActivity').value.trim(); if (!v) return;
+      if (activities.some(a => a.toLowerCase() === v.toLowerCase())) { ask('Atividade já existe', 'Essa atividade já está na lista.', { info: 1, ok: 'Entendi' }); return; }
+      activities.push(v); $('newActivity').value = ''; render();
+    };
+    $('newActivity').addEventListener('keydown', e => { if (e.key === 'Enter') $('addActivity').click(); });
+    document.querySelectorAll('#dayTabs button').forEach(b => b.onclick = () => {
+      view = b.dataset.view; showAll = view === 'all';
+      document.querySelectorAll('#dayTabs button').forEach(x => x.setAttribute('aria-selected', x === b));
+      render();
+    });
+    let undoSnapshot = null;
+    function clearUndo() { undoSnapshot = null; $('undoBtn').hidden = true; }
+    function bulkMsg(text, kind = '') { $('bulkMsg').textContent = text; $('bulkMsg').className = 'status ' + kind; }
+
+    const bulkActs = new Set();
+    const bulkHours = {};
+    const bulkMode = () => document.querySelector('input[name=bulkMode]:checked').value;
+    const joinNames = n => n.length > 1 ? n.slice(0, -1).map(x => `"${x}"`).join(', ') + ' e "' + n.at(-1) + '"' : `"${n[0]}"`;
+
+    function renderBulk() {
+      for (const n of [...bulkActs]) if (!activities.includes(n)) bulkActs.delete(n);
+      $('bulkActs').innerHTML = activities.map((a, k) =>
+        `<button type="button" class="chip" aria-pressed="${bulkActs.has(a)}" data-bact="${k}">${esc(a)}</button>`).join('');
+      const sel = activities.filter(a => bulkActs.has(a));
+      $('bulkHoursList').hidden = bulkMode() !== 'fixed';
+      $('bulkHoursList').innerHTML = sel.length
+        ? sel.map((a, k) => `<div class="split-row"><label for="bh-${k}">${esc(a)}</label>
+        <input id="bh-${k}" type="time" value="${bulkHours[a] || '04:00'}" data-bname="${esc(a)}"></div>`).join('')
+        : '<p class="muted" style="margin:6px 0">Escolha as atividades acima para informar as horas de cada uma.</p>';
+    }
+    $('bulkActs').addEventListener('click', e => {
+      const b = e.target.closest('[data-bact]'); if (!b) return;
+      const name = activities[+b.dataset.bact];
+      bulkActs.has(name) ? bulkActs.delete(name) : bulkActs.add(name);
+      renderBulk();
+    });
+    $('bulkHoursList').addEventListener('change', e => { if (e.target.dataset.bname) bulkHours[e.target.dataset.bname] = e.target.value; });
+    document.querySelectorAll('input[name=bulkMode]').forEach(r => r.onchange = renderBulk);
+    $('bulkDays').addEventListener('click', e => {
+      const b = e.target.closest('[data-wd]'); if (!b) return;
+      b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true');
+    });
+
+    $('bulkBtn').onclick = () => {
+      const names = activities.filter(a => bulkActs.has(a));
+      if (!names.length) { bulkMsg('Escolha pelo menos uma atividade.', 'bad'); return; }
+      const wds = [...document.querySelectorAll('#bulkDays [aria-pressed=true]')].map(b => b.dataset.wd);
+      if (!wds.length) { bulkMsg('Escolha pelo menos um dia da semana.', 'bad'); return; }
+      const fixed = bulkMode() === 'fixed';
+      if (fixed) {
+        $('bulkHoursList').querySelectorAll('[data-bname]').forEach(i => bulkHours[i.dataset.bname] = i.value);
+        const bad = names.find(n => toMinutes(bulkHours[n] || '04:00') <= 0);
+        if (bad) { bulkMsg(`Informe quantas horas por dia para "${bad}" (ex.: 04:00).`, 'bad'); return; }
+      }
+      const snapshot = days.map(d => d.allocations.map(a => ({ ...a })));
+      let applied = 0, already = 0, noFit = 0;
+      days.forEach(d => {
+        if (d.worked <= 0 || !wds.includes(d.weekday)) return;
+        const acts = names.filter(n => !d.allocations.some(a => a.activity === n));   // ignora as que o dia já tem
+        if (!acts.length) { already++; return; }
+        const free = d.worked - allocated(d);
+        if (free <= 0) { noFit++; return; }
+        let parts;
+        if (fixed) {
+          parts = acts.map(n => ({ activity: n, minutes: toMinutes(bulkHours[n] || '04:00') }));
+          if (parts.reduce((s, x) => s + x.minutes, 0) > free) { noFit++; return; }   // não cabe: não altera o dia
+        } else {
+          const share = Math.floor(free / acts.length);
+          parts = acts.map((n, k) => ({ activity: n, minutes: share + (k === acts.length - 1 ? free - share * acts.length : 0) }));
+        }
+        d.allocations.push(...parts); applied++;
+      });
+      if (applied + already + noFit === 0) { bulkMsg('Não há dias com horas trabalhadas nos dias da semana escolhidos.', 'bad'); return; }
+      if (applied) { undoSnapshot = snapshot; }
+      render();
+      $('undoBtn').hidden = !applied;
+      let msg = applied ? `${applied} dia(s) preenchido(s) com ${joinNames(names)}.` : 'Nenhum dia foi alterado.';
+      if (already) msg += ` ${already} já tinha(m) essas atividades.`;
+      if (noFit) msg += ` ${noFit} não recebeu/receberam por não ter horas livres suficientes.`;
+      bulkMsg(msg, applied ? 'good' : 'bad');
+    };
+    $('undoBtn').onclick = () => {
+      if (!undoSnapshot || undoSnapshot.length !== days.length) { clearUndo(); return; }
+      days.forEach((d, i) => d.allocations = undoSnapshot[i]);
+      clearUndo(); render(); bulkMsg('Atalho desfeito.', 'good');
+    };
+    $('step3').addEventListener('click', e => {
+      if (e.target.id !== 'gotoPending') return;
+      const i = days.findIndex(d => d.worked > 0 && !isDone(d));
+      if (i >= 0) { selDate = days[i].date; calMonth = selDate.slice(0, 7); if (view === 'cal') render(); const el = $('day-' + i); el && el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    });
+    $('clearBtn').onclick = async () => {
+      if (!await ask('Começar de novo', 'Apagar todos os dados e começar de novo?', { ok: 'Apagar tudo', danger: 1 })) return;
+      days = []; undoSnapshot = null; $('undoBtn').hidden = true; $('fileName').textContent = ''; $('pdfFile').value = ''; $('debugText').textContent = 'Nenhum PDF lido ainda.';
+      setStatus(''); render(); window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    /* ---------- exemplo ---------- */
+    $('sampleBtn').onclick = () => {
+      const y = Number($('yearInput').value) || new Date().getFullYear();
+      const raw = [['10-06', '08:00'], ['10-07', '08:00'], ['10-08', '08:00'], ['10-09', '08:00'], ['10-10', '00:00'], ['10-11', '00:00'],
+      ['10-12', '00:00'], ['10-13', '00:00'], ['10-14', '08:00'], ['10-15', '08:00'], ['10-16', '08:00'], ['10-17', '00:00'], ['10-18', '00:00'],
+      ['10-19', '08:00'], ['10-20', '08:00'], ['10-21', '08:00'], ['10-22', '08:00'], ['10-23', '08:00'], ['10-24', '00:00'], ['10-25', '00:00'],
+      ['10-26', '08:00'], ['10-27', '08:00'], ['10-28', '08:00'], ['10-29', '08:00'], ['10-30', '08:00'], ['10-31', '00:00'], ['11-01', '00:00'],
+      ['11-02', '00:00'], ['11-03', '08:00'], ['11-04', '08:00'], ['11-05', '08:00']];
+      days = raw.map(([md, h]) => {
+        const iso = `${y}-${md}`;
+        return createDay(iso, weekdayOf(iso), toMinutes(h), md === '10-24' ? 480 : md === '10-31' ? 210 : 0);
+      });
+      $('fileName').textContent = 'Exemplo (não é o seu PDF)';
+      setStatus('Exemplo carregado. Siga para o passo 2.', 'good'); render();
+      $('step2').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    /* ---------- leitura do PDF ---------- */
+    function groupRows(items) {
+      const rows = [];
+      for (const it of items) {
+        if (!it.str || !it.str.trim()) continue;
+        const y = it.transform[5];
+        let r = rows.find(x => Math.abs(x.y - y) <= 3);
+        if (!r) { r = { y, items: [] }; rows.push(r); }
+        r.items.push({ x: it.transform[4], s: it.str.trim() });
+      }
+      rows.sort((a, b) => b.y - a.y);
+      return rows.map(r => r.items.sort((a, b) => a.x - b.x));
+    }
+    function timeNear(row, colX, tol = 60) {
+      if (colX == null) return '';
+      let best = null;
+      for (const it of row) {
+        if (!/^\d{1,3}:\d{2}$/.test(it.s)) continue;
+        const dist = Math.abs(it.x - colX);
+        if (dist <= tol && (!best || dist < best.dist)) best = { dist, s: it.s };
+      }
+      return best ? best.s : '';
+    }
+    async function parsePDF(file) {
+      if (!window.pdfjsLib) throw new Error('Não consegui carregar o leitor de PDF. Verifique se o computador está conectado à internet e tente de novo.');
+      setStatus('Lendo o PDF, aguarde...');
+      const pdf = await pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
+      const allRows = [];
+      for (let p = 1; p <= pdf.numPages; p++) {
+        const content = await (await pdf.getPage(p)).getTextContent();
+        allRows.push(...groupRows(content.items));
+      }
+      const fullText = allRows.map(r => r.map(x => x.s).join(' ')).join('\n');
+      $('debugText').textContent = fullText;
+
+      const years = {};
+      for (const m of fullText.matchAll(/\b\d{2}\/\d{2}\/(20\d{2})\b/g)) years[m[1]] = (years[m[1]] || 0) + 1;
+      const topYear = Object.entries(years).sort((a, b) => b[1] - a[1])[0];
+      let year = topYear ? Number(topYear[0]) : (Number($('yearInput').value) || new Date().getFullYear());
+      if (topYear) $('yearInput').value = year;
+
+      const header = allRows.find(r => r.some(x => /Trabalhad/i.test(x.s)));
+      const workedX = header?.find(x => /Trabalhad/i.test(x.s))?.x;
+      const creditX = header?.find(x => /Cr[eé]d/i.test(x.s))?.x;
+      if (workedX == null) throw new Error('Não encontrei a coluna "Trabalhado" neste PDF. Confira se é o cartão-ponto correto.');
+
+      const found = []; let prevMonth = null;
+      for (const row of allRows) {
+        const joined = row.map(x => x.s).join(' ');
+        const m = joined.match(/\b(\d{2})\/(\d{2})(?:\/\d{2,4})?\s+(SEG|TER|QUA|QUI|SEX|SAB|S[ÁA]B|DOM)\b/i);
+        if (!m) continue;
+        const month = Number(m[2]);
+        if (prevMonth != null && month < prevMonth - 6) year++;
+        prevMonth = month;
+        const iso = `${year}-${String(month).padStart(2, '0')}-${m[1]}`;
+        found.push(createDay(iso, m[3].toUpperCase().replace('SÁB', 'SAB'), toMinutes(timeNear(row, workedX)), toMinutes(timeNear(row, creditX))));
+      }
+      if (!found.length) throw new Error('Não encontrei os dias neste PDF (esperado algo como "06/10 TER").');
+      found.sort((a, b) => a.date.localeCompare(b.date));
+      days = found;
+      setStatus(`Pronto! Encontrei ${found.filter(d => d.worked > 0).length} dias trabalhados. Siga para o passo 2.`, 'good');
+      render();
+      $('step2').scrollIntoView({ behavior: 'smooth' });
+    }
+    $('pdfFile').addEventListener('change', async e => {
+      const f = e.target.files[0]; if (!f) return;
+      $('fileName').textContent = f.name;
+      try { await parsePDF(f); } catch (err) { console.error(err); setStatus(err.message + ' Se o problema continuar, abra "Opções avançadas" abaixo.', 'bad'); }
+    });
+
+    /* ---------- exportação Excel ---------- */
+    $('exportBtn').onclick = async () => {
+      if (!window.XLSX) { await ask('Erro ao gerar Excel', 'Não consegui carregar o gerador de Excel. Verifique a conexão com a internet e tente de novo.', { info: 1, ok: 'Entendi' }); return; }
+      const work = days.filter(d => d.worked > 0), incomplete = work.filter(d => !isDone(d)).length;
+      if (incomplete && !await ask('Dias incompletos', `Ainda há ${incomplete} dia(s) incompleto(s). Baixar a planilha mesmo assim?`, { ok: 'Baixar mesmo assim' })) return;
+
+      const T = min => ({ t: 'n', v: min / 1440, z: '[h]:mm' });
+      const D = iso => ({ t: 'n', v: excelSerial(iso), z: 'dd/mm/yyyy' });
+      const S = v => ({ t: 's', v });
+
+      const rows1 = [['Data', 'Dia da semana', 'Horas trabalhadas no dia', 'Atividade', 'Horas na atividade', 'Crédito banco de horas'].map(S)];
+      days.forEach(d => {
+        if (d.allocations.length) d.allocations.forEach(a => rows1.push([D(d.date), S(WEEKDAYS[d.weekday]), T(d.worked), S(a.activity), T(a.minutes), T(d.bank)]));
+        else rows1.push([D(d.date), S(WEEKDAYS[d.weekday]), T(d.worked), S(d.worked ? 'Não distribuído' : 'Sem horas'), T(0), T(d.bank)]);
+      });
+      const ws1 = XLSX.utils.aoa_to_sheet(rows1);
+      ws1['!cols'] = [{ wch: 13 }, { wch: 18 }, { wch: 24 }, { wch: 28 }, { wch: 20 }, { wch: 22 }];
+
+      const totals = totalsByActivity();
+      const list = Object.entries(totals).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+      const sumAll = list.reduce((s, x) => s + x[1], 0);
+      const last = rows1.length, sh = "'Lançamentos diários'", n = list.length;
+      const rows2 = [['Atividade', 'Total de horas', '% sobre horas distribuídas'].map(S)];
+      list.forEach(([name, min], i) => {
+        const r = i + 2;
+        rows2.push([S(name),
+        { t: 'n', f: `SUMIF(${sh}!$D$2:$D$${last},A${r},${sh}!$E$2:$E$${last})`, v: min / 1440, z: '[h]:mm' },
+        { t: 'n', f: `B${r}/B${n + 2}`, v: sumAll ? min / sumAll : 0, z: '0.0%' }]);
+      });
+      rows2.push([S('TOTAL DISTRIBUÍDO'), { t: 'n', f: `SUM(B2:B${n + 1})`, v: sumAll / 1440, z: '[h]:mm' }, { t: 'n', v: n ? 1 : 0, z: '0.0%' }]);
+      rows2.push([S('TOTAL TRABALHADO (cartão-ponto)'), T(days.reduce((s, d) => s + d.worked, 0))]);
+      rows2.push([S('CRÉDITO BANCO DE HORAS (separado)'), T(days.reduce((s, d) => s + d.bank, 0))]);
+      const ws2 = XLSX.utils.aoa_to_sheet(rows2);
+      ws2['!cols'] = [{ wch: 38 }, { wch: 18 }, { wch: 28 }];
+
+      const cols = list.map(x => x[0]), enc = XLSX.utils.encode_col;
+      const rows3 = [[S('Data'), S('Dia da semana'), ...cols.map(S), S('Total do dia')]];
+      days.forEach((d, i) => {
+        const r = i + 2;
+        rows3.push([D(d.date), S(WEEKDAYS[d.weekday]),
+        ...cols.map(c => T(d.allocations.filter(a => a.activity === c).reduce((s, a) => s + a.minutes, 0))),
+        cols.length ? { t: 'n', f: `SUM(C${r}:${enc(cols.length + 1)}${r})`, v: allocated(d) / 1440, z: '[h]:mm' } : T(0)]);
+      });
+      const tr = days.length + 2;
+      rows3.push([S('TOTAL'), S(''),
+      ...cols.map((c, k) => { const L = enc(k + 2); return { t: 'n', f: `SUM(${L}2:${L}${tr - 1})`, v: totals[c] / 1440, z: '[h]:mm' }; }),
+      { t: 'n', f: `SUM(${enc(cols.length + 2)}2:${enc(cols.length + 2)}${tr - 1})`, v: sumAll / 1440, z: '[h]:mm' }]);
+      const ws3 = XLSX.utils.aoa_to_sheet(rows3);
+      ws3['!cols'] = [{ wch: 13 }, { wch: 18 }, ...cols.map(() => ({ wch: 16 })), { wch: 14 }];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws1, 'Lançamentos diários');
+      XLSX.utils.book_append_sheet(wb, ws2, 'Resumo por atividade');
+      XLSX.utils.book_append_sheet(wb, ws3, 'Matriz dia x atividade');
+      XLSX.writeFile(wb, 'controle_atividades_horas.xlsx');
+    };
+
+    /* ---------- calendário ---------- */
+    $('daysList').addEventListener('click', e => {
+      const c = e.target.closest('[data-calday]'), n = e.target.closest('[data-calnav]');
+      if (c) { selDate = c.dataset.calday; render(); }
+      else if (n && !n.disabled) {
+        const [y, m] = calMonth.split('-').map(Number);
+        calMonth = new Date(Date.UTC(y, m - 1 + Number(n.dataset.calnav), 1)).toISOString().slice(0, 7);
+        const inMonth = days.filter(d => d.date.startsWith(calMonth));
+        const f = inMonth.find(d => d.worked > 0 && !isDone(d)) || inMonth.find(d => d.worked > 0) || inMonth[0];
+        if (f) selDate = f.date;
+        render();
+      }
+    });
+
+    /* ---------- excluir dia / adicionar dia avulso ---------- */
+    $('daysList').addEventListener('click', async e => {
+      const b = e.target.closest('[data-delday]'); if (!b) return;
+      const i = +b.dataset.delday, d = days[i]; if (!d) return;
+      if (!await ask('Excluir dia', `Excluir ${WEEKDAYS[d.weekday]}, ${brDate(d.date).slice(0, 5)}, e as atividades lançadas nele?`, { ok: 'Excluir', danger: 1 })) return;
+      clearUndo(); days.splice(i, 1); render();
+    });
+    function openDayDialog() {
+      let next = '';
+      if (days.length) { const [y, m, d] = days.at(-1).date.split('-').map(Number); next = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10); }
+      $('newDayDate').value = next; $('newDayHours').value = '08:00'; $('newDayErr').textContent = '';
+      $('dayDlg').showModal(); $('newDayDate').focus();
+    }
+    $('addDayBtn').onclick = openDayDialog;
+    $('addDayMenu').onclick = openDayDialog;
+    $('dayCancel').onclick = () => $('dayDlg').close();
+    $('daySave').onclick = () => {
+      const date = $('newDayDate').value, min = toMinutes($('newDayHours').value), err = t => { $('newDayErr').textContent = t; };
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return err('Escolha uma data.');
+      if (days.some(d => d.date === date)) return err('Esse dia já existe na lista.');
+      if (min <= 0) return err('Informe as horas trabalhadas (ex.: 08:00).');
+      clearUndo(); days.push(createDay(date, weekdayOf(date), min)); days.sort((a, b) => a.date.localeCompare(b.date));
+      selDate = date; calMonth = date.slice(0, 7); $('dayDlg').close(); render();
+      const el = $('day-' + days.findIndex(d => d.date === date)); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    /* ---------- layout: sidebar (Sheet no mobile), menu suspenso ---------- */
+    const navToggle = on => document.body.classList.toggle('nav-open', on);
+    $('menuBtn').onclick = () => navToggle(true);
+    $('scrim').onclick = () => navToggle(false);
+    document.querySelectorAll('.sidebar .nav').forEach(a => a.addEventListener('click', e => {
+      if (a.classList.contains('off')) { e.preventDefault(); return; } navToggle(false);
+    }));
+    const closeMore = () => { $('moreMenu').hidden = true; $('moreBtn').setAttribute('aria-expanded', 'false'); };
+    $('moreBtn').onclick = e => { e.stopPropagation(); const open = $('moreMenu').hidden; $('moreMenu').hidden = !open; $('moreBtn').setAttribute('aria-expanded', open); };
+    $('moreMenu').addEventListener('click', closeMore);
+    document.addEventListener('click', closeMore);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeMore(); navToggle(false); } });
+    $('exportTop').onclick = () => $('exportBtn').click();
+
+    /* ---------- início ---------- */
+    $('yearInput').value = new Date().getFullYear();
+    load();
+    if (days.length) $('fileName').textContent = 'Dados anteriores recuperados neste computador.';
+    render();
+  </script>
+</body>
+
+</html>
